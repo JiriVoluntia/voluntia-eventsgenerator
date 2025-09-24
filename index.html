@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=1080" />
 <title>Voluntia Event Generator</title>
 
-<!-- Načtení fontu Inter s potřebnými řezy -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;900&display=swap" rel="stylesheet" />
 
 <style>
@@ -26,6 +25,10 @@
   }
   canvas {
     border: 1px solid #ccc;
+    user-select: none; /* zabránit výběru textu při drag */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
   #controls {
     max-width: 320px;
@@ -199,7 +202,6 @@
     canvas.add(texts.title, texts.place, texts.time, texts.author);
   }
 
-  // Nahrání uživatelského pozadí
   document.getElementById('inputBackground').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -218,7 +220,6 @@
     reader.readAsDataURL(file);
   });
 
-  // Nahrávání fotek osob
   document.getElementById('inputPersons').addEventListener('change', e => {
     const files = e.target.files;
     if (!files.length) return;
@@ -247,7 +248,6 @@
     });
   });
 
-  // Přidání shadow předního nad osobami
   function addShadowPredni() {
     canvas.getObjects().forEach(obj => {
       if(obj.shadowFront) canvas.remove(obj);
@@ -261,7 +261,6 @@
     });
   }
 
-  // Mazání vybrané fotky klávesou Delete/Backspace
   document.addEventListener('keydown', e => {
     if(e.key === "Delete" || e.key === "Backspace") {
       const active = canvas.getActiveObject();
@@ -273,7 +272,6 @@
     }
   });
 
-  // Aktualizace textů při změně vstupních polí
   ['inputTitle', 'inputPlace', 'inputTime', 'inputAuthor'].forEach(id => {
     document.getElementById(id).addEventListener('input', e => {
       const val = e.target.value;
