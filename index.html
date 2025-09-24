@@ -10,17 +10,17 @@
 <style>
   body {
     font-family: 'Inter', sans-serif;
-    margin: 0; padding: 20px;
-    display: flex; flex-direction: column;
-    align-items: center;
+    margin: 0; padding: 10px;
+    display: flex; flex-wrap: wrap;
+    justify-content: center;
     background: #f0f0f0;
+    gap: 20px;
   }
   #canvas-container {
-    width: 90vw;
+    flex: 1 1 650px;
     max-width: 1080px;
-    height: auto;
-    box-shadow: 0 0 10px rgba(0,0,0,0.3);
     background: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
   }
   canvas {
     width: 100% !important;
@@ -34,25 +34,25 @@
     -webkit-touch-callout: none;
   }
   #controls {
-    width: 90vw;
-    max-width: 320px;
+    flex: 0 0 320px;
     background: white;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    margin-top: 20px;
+    box-sizing: border-box;
   }
   #controls label {
     font-weight: 600;
     display: block;
     margin-bottom: 6px;
     margin-top: 14px;
+    font-size: 14px;
   }
   #controls input[type=text],
   #controls input[type=file] {
     width: 100%;
     padding: 10px;
-    font-size: 18px;
+    font-size: 16px;
     border-radius: 4px;
     border: 1px solid #ccc;
     box-sizing: border-box;
@@ -62,7 +62,7 @@
     width: 100%;
     padding: 15px;
     font-weight: 700;
-    font-size: 18px;
+    font-size: 16px;
     color: #000;
     background: #FED801;
     border: none;
@@ -71,6 +71,18 @@
   }
   #controls button:hover {
     background: #e1c500;
+  }
+
+  @media (max-width: 900px) {
+    body {
+      flex-direction: column;
+      align-items: center;
+    }
+    #controls {
+      flex: 1 1 100%;
+      max-width: 100%;
+      margin-top: 15px;
+    }
   }
 </style>
 </head>
@@ -134,7 +146,7 @@
         if (options.height !== undefined) img.height = options.height;
         if (options.hasControls !== undefined) img.hasControls = options.hasControls;
         if (options.selectable !== undefined) img.selectable = options.selectable;
-        if (options.customType) img.customType = options.customType; // pro vrstvu
+        if (options.customType) img.customType = options.customType; // for layering
         img.set({...options});
         resolve(img);
       }, {crossOrigin: 'anonymous'});
@@ -144,7 +156,6 @@
   async function setupCanvas() {
     canvas.clear();
 
-    // Nahrání základních vrstev s customType pro kontrolu
     const shadowPozadi = await loadImage(assets.shadowPozadi, {left:0, top:0, selectable:false, customType:'shadowPozadi'});
     const pozadi = await loadImage(assets.pozadi, {left:0, top:0, selectable:false, customType:'pozadi'});
     const spodniLista = await loadImage(assets.spodniLista, {left:0, top:972, selectable:false, customType:'spodniLista'});
@@ -153,9 +164,6 @@
 
     canvas.add(shadowPozadi);
     canvas.add(pozadi);
-
-    // Osoby a shadow přední se budou přidávat později, ne zde
-
     canvas.add(spodniLista);
     canvas.add(lokaceZnak);
     canvas.add(hodinyZnak);
@@ -172,66 +180,64 @@
     const fontFamily = 'Inter, sans-serif';
 
     texts.title = new fabric.Textbox(document.getElementById('inputTitle').value, {
-      left:40, top: 586, fontFamily, fontWeight: '900', fontSize: 90, fill: '#ffffff',
+      left:40, top: 586, fontFamily, fontWeight: '900', fontSize: 90, fill: '#fff',
       shadow: new fabric.Shadow({color: 'rgba(0,0,0,0.25)', blur: 3, offsetX: 0, offsetY: 3}),
-      selectable: false, width: 1000, customType: 'textTitle'
+      selectable: false, width: 1000, customType:'textTitle'
     });
     texts.place = new fabric.Textbox(document.getElementById('inputPlace').value, {
       left:93, top: 811, fontFamily, fontWeight: '700', fontSize: 50, fill: '#FED801',
       shadow: new fabric.Shadow({color: 'rgba(0,0,0,0.25)', blur: 2, offsetX: 0, offsetY: 2}),
-      selectable: false, width: 950, customType: 'textPlace'
+      selectable: false, width: 950, customType:'textPlace'
     });
     texts.time = new fabric.Textbox(document.getElementById('inputTime').value, {
       left:93, top: 874, fontFamily, fontWeight: '700', fontSize: 50, fill: '#FED801',
       shadow: new fabric.Shadow({color: 'rgba(0,0,0,0.25)', blur: 2, offsetX: 0, offsetY: 2}),
-      selectable: false, width: 950, customType: 'textTime'
+      selectable: false, width: 950, customType:'textTime'
     });
     texts.author = new fabric.Textbox(document.getElementById('inputAuthor').value || 'zadavatel/zpracovatel: Voluntia', {
       left:815, top: 930, fontFamily, fontWeight: '600', fontSize: 14, fill: 'rgba(255,255,255,0.7)',
-      textAlign:'right', selectable:false, width: 250, customType:'textAuthor'
+      textAlign: 'right', selectable: false, width: 250, customType:'textAuthor'
     });
 
     canvas.add(texts.title, texts.place, texts.time, texts.author);
   }
 
   function reorderLayers() {
-    // Určení objektů dle customType
     const objs = canvas.getObjects();
     const pozadi = objs.find(o => o.customType === 'pozadi');
     const shadowPozadi = objs.find(o => o.customType === 'shadowPozadi');
-    const osoby = objs.filter(o => o.customType === 'osoba');
-    const shadowPredni = objs.find(o => o.customType === 'shadowPredni');
-    const hodinyZnak = objs.find(o => o.customType === 'hodinyZnak');
-    const lokaceZnak = objs.find(o => o.customType === 'lokaceZnak');
     const spodniLista = objs.find(o => o.customType === 'spodniLista');
+    const lokaceZnak = objs.find(o => o.customType === 'lokaceZnak');
+    const hodinyZnak = objs.find(o => o.customType === 'hodinyZnak');
+    const shadowPredni = objs.find(o => o.customType === 'shadowPredni');
+    const osoby = objs.filter(o => o.customType === 'osoba');
     const textTitle = objs.find(o => o.customType === 'textTitle');
     const textPlace = objs.find(o => o.customType === 'textPlace');
     const textTime = objs.find(o => o.customType === 'textTime');
     const textAuthor = objs.find(o => o.customType === 'textAuthor');
 
-    // nastavíme vrstvu dle požadovaného pořadí
     let idx = 0;
-    if (pozadi) canvas.moveTo(pozadi, idx++);
-    if (shadowPozadi) canvas.moveTo(shadowPozadi, idx++);
+    if(pozadi) canvas.moveTo(pozadi, idx++);
+    if(shadowPozadi) canvas.moveTo(shadowPozadi, idx++);
     osoby.forEach(osoba => canvas.moveTo(osoba, idx++));
-    if (shadowPredni) canvas.moveTo(shadowPredni, idx++);
-    if (spodniLista) canvas.moveTo(spodniLista, idx++);
-    if (lokaceZnak) canvas.moveTo(lokaceZnak, idx++);
-    if (hodinyZnak) canvas.moveTo(hodinyZnak, idx++);
-    if (textTime) canvas.moveTo(textTime, idx++);
-    if (textPlace) canvas.moveTo(textPlace, idx++);
-    if (textTitle) canvas.moveTo(textTitle, idx++);
-    if (textAuthor) canvas.moveTo(textAuthor, idx++);
+    if(shadowPredni) canvas.moveTo(shadowPredni, idx++);
+    if(spodniLista) canvas.moveTo(spodniLista, idx++);
+    if(lokaceZnak) canvas.moveTo(lokaceZnak, idx++);
+    if(hodinyZnak) canvas.moveTo(hodinyZnak, idx++);
+    if(textTime) canvas.moveTo(textTime, idx++);
+    if(textPlace) canvas.moveTo(textPlace, idx++);
+    if(textTitle) canvas.moveTo(textTitle, idx++);
+    if(textAuthor) canvas.moveTo(textAuthor, idx++);
   }
 
   document.getElementById('inputBackground').addEventListener('change', e => {
     const file = e.target.files[0];
-    if (!file) return;
+    if(!file) return;
     const reader = new FileReader();
     reader.onload = function(event) {
       fabric.Image.fromURL(event.target.result, img => {
         if(userBackgroundImage) canvas.remove(userBackgroundImage);
-        img.set({left:0, top:0, selectable:false, evented:false, customType:'pozadi'});
+        img.set({left: 0, top: 0, selectable: false, evented: false, customType: 'pozadi'});
         img.scaleToWidth(canvas.width);
         img.scaleToHeight(canvas.height);
         canvas.insertAt(img, 0);
@@ -245,23 +251,19 @@
 
   document.getElementById('inputPersons').addEventListener('change', e => {
     const files = e.target.files;
-    if (!files.length) return;
+    if(!files.length) return;
 
     Array.from(files).forEach(file => {
       const reader = new FileReader();
       reader.onload = function(event) {
         fabric.Image.fromURL(event.target.result, img => {
           img.set({
-            left: 300,
-            top: 200,
-            scaleX: 0.5,
-            scaleY: 0.5,
-            hasBorders: true,
-            hasControls: true,
-            selectable: true,
-            evented: true,
+            left: 300, top: 200,
+            scaleX: 0.5, scaleY: 0.5,
+            hasBorders: true, hasControls: true,
+            selectable: true, evented: true,
             hoverCursor: 'move',
-            customType:'osoba'
+            customType: 'osoba'
           });
           canvas.add(img);
           canvas.setActiveObject(img);
@@ -286,7 +288,7 @@
   }
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Delete' || e.key === 'Backspace') {
+    if(e.key === 'Delete' || e.key === 'Backspace') {
       const active = canvas.getActiveObject();
       if(active && active.selectable) {
         canvas.remove(active);
@@ -310,8 +312,8 @@
     });
   });
 
-  // inicializace
   setupCanvas();
 </script>
+
 </body>
 </html>
