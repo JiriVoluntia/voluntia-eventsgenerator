@@ -87,7 +87,7 @@
 <script>
   const canvas = new fabric.Canvas('eventCanvas', {preserveObjectStacking: true});
 
-  // Load background images (shadow background, base background, shadow front, bottom bar and icons)
+  // Cesty k obrázkům ve složce assets
   const assets = {
     shadowPozadi: 'assets/Shadow-pozadi.jpg',
     pozadi: 'assets/Celkovy-obrazek.jpg',
@@ -116,17 +116,15 @@
   async function setupCanvas() {
     canvas.clear();
 
-    // Load layered backgrounds
+    // Načtení vrstev pozadí
     const shadowPozadi = await loadImage(assets.shadowPozadi, {left:0, top:0, selectable: false});
     const pozadi = await loadImage(assets.pozadi, {left:0, top:0, selectable: false});
-    const shadowPredni = await loadImage(assets.shadowPredni, {left:0, top:0, selectable: false});
     const spodniLista = await loadImage(assets.spodniLista, {left:0, top:972, selectable: false});
     const lokaceZnak = await loadImage(assets.lokaceZnak, {left:40, top:824, selectable: false, width:37, height:37});
     const hodinyZnak = await loadImage(assets.hodinyZnak, {left:40, top:884, selectable: false, width:37, height:37});
 
     canvas.add(shadowPozadi);
     canvas.add(pozadi);
-    canvas.add(shadowPredni);
     canvas.add(spodniLista);
     canvas.add(lokaceZnak);
     canvas.add(hodinyZnak);
@@ -138,7 +136,6 @@
   function addTextObjects() {
     let fontFamily = 'Inter, sans-serif';
 
-    // Název
     texts.title = new fabric.Textbox(document.getElementById('inputTitle').value, {
       left: 40, top: 586,
       fontFamily,
@@ -155,7 +152,6 @@
       width: 1000
     });
 
-    // Místo
     texts.place = new fabric.Textbox(document.getElementById('inputPlace').value, {
       left: 93, top: 811,
       fontFamily,
@@ -172,7 +168,6 @@
       width: 950
     });
 
-    // Čas
     texts.time = new fabric.Textbox(document.getElementById('inputTime').value, {
       left: 93, top: 874,
       fontFamily,
@@ -189,7 +184,6 @@
       width: 950
     });
 
-    // Zpracovatel (vpravo dole)
     texts.author = new fabric.Textbox(document.getElementById('inputAuthor').value || 'zadavatel/zpracovatel: Voluntia', {
       left: 815, top: 930,
       fontFamily,
@@ -204,21 +198,7 @@
     canvas.add(texts.title, texts.place, texts.time, texts.author);
   }
 
-  // Aktualizace textů při změně inputů
-  ['inputTitle', 'inputPlace', 'inputTime', 'inputAuthor'].forEach(id => {
-    document.getElementById(id).addEventListener('input', e => {
-      const val = e.target.value;
-      switch(e.target.id) {
-        case 'inputTitle': texts.title && (texts.title.text = val); break;
-        case 'inputPlace': texts.place && (texts.place.text = val); break;
-        case 'inputTime': texts.time && (texts.time.text = val); break;
-        case 'inputAuthor': texts.author && (texts.author.text = val || 'zadavatel/zpracovatel: Voluntia'); break;
-      }
-      canvas.renderAll();
-    });
-  });
-
-  // Upload a přidání fotek osob jako draggable objekty
+  // Upload a přidání fotek osob jako draggable objekty a přidání shadow předního do správné vrstvy
   document.getElementById('inputPersons').addEventListener('change', e => {
     const files = e.target.files;
     if (!files.length) return;
@@ -237,9 +217,50 @@
           });
           canvas.add(img);
           canvas.setActiveObject(img);
+          
+          addShadowPredni();
         });
       };
       reader.readAsDataURL(file);
+    });
+  });
+
+  function addShadowPredni() {
+    // Odstranit existující shadow přední, pokud je
+    canvas.getObjects().forEach(obj => {
+      if (obj.shadowFront) {
+        canvas.remove(obj);
+      }
+    });
+    fabric.Image.fromURL(assets.shadowPredni, img => {
+      img.set({
+        left: 0,
+        top: 0,
+        selectable: false,
+        shadowFront: true
+      });
+      canvas.add(img);
+      canvas.bringToFront(img);
+
+      // Texty musí být nad shadow přední
+      Object.values(texts).forEach(textObj => {
+        canvas.bringToFront(textObj);
+      });
+      canvas.renderAll();
+    });
+  }
+
+  // Aktualizace textů při změně inputů
+  ['inputTitle', 'inputPlace', 'inputTime', 'inputAuthor'].forEach(id => {
+    document.getElementById(id).addEventListener('input', e => {
+      const val = e.target.value;
+      switch(e.target.id) {
+        case 'inputTitle': texts.title && (texts.title.text = val); break;
+        case 'inputPlace': texts.place && (texts.place.text = val); break;
+        case 'inputTime': texts.time && (texts.time.text = val); break;
+        case 'inputAuthor': texts.author && (texts.author.text = val || 'zadavatel/zpracovatel: Voluntia'); break;
+      }
+      canvas.renderAll();
     });
   });
 
