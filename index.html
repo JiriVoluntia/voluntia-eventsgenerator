@@ -134,6 +134,7 @@
         if (options.height !== undefined) img.height = options.height;
         if (options.hasControls !== undefined) img.hasControls = options.hasControls;
         if (options.selectable !== undefined) img.selectable = options.selectable;
+        if (options.customType) img.customType = options.customType; // pro vrstvu
         img.set({...options});
         resolve(img);
       }, {crossOrigin: 'anonymous'});
@@ -143,29 +144,25 @@
   async function setupCanvas() {
     canvas.clear();
 
-    const shadowPozadi = await loadImage(assets.shadowPozadi, {left:0, top:0, selectable: false});
-    const pozadi = await loadImage(assets.pozadi, {left:0, top:0, selectable: false});
-    const spodniLista = await loadImage(assets.spodniLista, {left:0, top:972, selectable: false});
-    const lokaceZnak = await loadImage(assets.lokaceZnak, {left:40, top:824, selectable: false, width:37, height:37});
-    const hodinyZnak = await loadImage(assets.hodinyZnak, {left:40, top:884, selectable: false, width:37, height:37});
+    // Nahrání základních vrstev s customType pro kontrolu
+    const shadowPozadi = await loadImage(assets.shadowPozadi, {left:0, top:0, selectable:false, customType:'shadowPozadi'});
+    const pozadi = await loadImage(assets.pozadi, {left:0, top:0, selectable:false, customType:'pozadi'});
+    const spodniLista = await loadImage(assets.spodniLista, {left:0, top:972, selectable:false, customType:'spodniLista'});
+    const lokaceZnak = await loadImage(assets.lokaceZnak, {left:40, top:824, selectable:false, width:37, height:37, customType:'lokaceZnak'});
+    const hodinyZnak = await loadImage(assets.hodinyZnak, {left:40, top:884, selectable:false, width:37, height:37, customType:'hodinyZnak'});
 
     canvas.add(shadowPozadi);
     canvas.add(pozadi);
-    canvas.add(spodniLista);
 
-    // Přidání ikon hned po spodní liště, aby byly navrchu
+    // Osoby a shadow přední se budou přidávat později, ne zde
+
+    canvas.add(spodniLista);
     canvas.add(lokaceZnak);
     canvas.add(hodinyZnak);
 
     addTextObjects();
 
-    await addShadowPredni();
-
-    // Posunutí spodní lišty, ikon a textů pro zaručení vrchní vrstvy
-    canvas.bringToFront(spodniLista);
-    canvas.bringToFront(lokaceZnak);
-    canvas.bringToFront(hodinyZnak);
-    Object.values(texts).forEach(t => canvas.bringToFront(t));
+    reorderLayers();
 
     canvas.renderAll();
   }
@@ -175,65 +172,56 @@
     const fontFamily = 'Inter, sans-serif';
 
     texts.title = new fabric.Textbox(document.getElementById('inputTitle').value, {
-      left: 40, top: 586,
-      fontFamily,
-      fontWeight: '900',
-      fontSize: 90,
-      fill: '#ffffff',
+      left:40, top: 586, fontFamily, fontWeight: '900', fontSize: 90, fill: '#ffffff',
       shadow: new fabric.Shadow({color: 'rgba(0,0,0,0.25)', blur: 3, offsetX: 0, offsetY: 3}),
-      selectable: false,
-      width: 1000,
+      selectable: false, width: 1000, customType: 'textTitle'
     });
-
     texts.place = new fabric.Textbox(document.getElementById('inputPlace').value, {
-      left: 93, top: 811,
-      fontFamily,
-      fontWeight: '700',
-      fontSize: 50,
-      fill: '#FED801',
+      left:93, top: 811, fontFamily, fontWeight: '700', fontSize: 50, fill: '#FED801',
       shadow: new fabric.Shadow({color: 'rgba(0,0,0,0.25)', blur: 2, offsetX: 0, offsetY: 2}),
-      selectable: false,
-      width: 950,
+      selectable: false, width: 950, customType: 'textPlace'
     });
-
     texts.time = new fabric.Textbox(document.getElementById('inputTime').value, {
-      left: 93, top: 874,
-      fontFamily,
-      fontWeight: '700',
-      fontSize: 50,
-      fill: '#FED801',
+      left:93, top: 874, fontFamily, fontWeight: '700', fontSize: 50, fill: '#FED801',
       shadow: new fabric.Shadow({color: 'rgba(0,0,0,0.25)', blur: 2, offsetX: 0, offsetY: 2}),
-      selectable: false,
-      width: 950,
+      selectable: false, width: 950, customType: 'textTime'
     });
-
     texts.author = new fabric.Textbox(document.getElementById('inputAuthor').value || 'zadavatel/zpracovatel: Voluntia', {
-      left: 815, top: 930,
-      fontFamily,
-      fontWeight: '600',
-      fontSize: 14,
-      fill: 'rgba(255,255,255,0.7)',
-      textAlign: 'right',
-      selectable: false,
-      width: 250,
+      left:815, top: 930, fontFamily, fontWeight: '600', fontSize: 14, fill: 'rgba(255,255,255,0.7)',
+      textAlign:'right', selectable:false, width: 250, customType:'textAuthor'
     });
 
     canvas.add(texts.title, texts.place, texts.time, texts.author);
   }
 
-  async function addShadowPredni() {
-    if(shadowFrontImage) {
-      canvas.remove(shadowFrontImage);
-      shadowFrontImage = null;
-    }
-    const img = await loadImage(assets.shadowPredni, {left:0, top:0, selectable: false});
-    shadowFrontImage = img;
-    canvas.add(img);
-    // vložit pod spodní lištu
-    const spodniLista = canvas.getObjects().find(o => o._element && o._element.src.includes('Spodni-lista'));
-    if(spodniLista) canvas.insertBefore(img, spodniLista);
-    else canvas.sendToBack(img);
-    canvas.renderAll();
+  function reorderLayers() {
+    // Určení objektů dle customType
+    const objs = canvas.getObjects();
+    const pozadi = objs.find(o => o.customType === 'pozadi');
+    const shadowPozadi = objs.find(o => o.customType === 'shadowPozadi');
+    const osoby = objs.filter(o => o.customType === 'osoba');
+    const shadowPredni = objs.find(o => o.customType === 'shadowPredni');
+    const hodinyZnak = objs.find(o => o.customType === 'hodinyZnak');
+    const lokaceZnak = objs.find(o => o.customType === 'lokaceZnak');
+    const spodniLista = objs.find(o => o.customType === 'spodniLista');
+    const textTitle = objs.find(o => o.customType === 'textTitle');
+    const textPlace = objs.find(o => o.customType === 'textPlace');
+    const textTime = objs.find(o => o.customType === 'textTime');
+    const textAuthor = objs.find(o => o.customType === 'textAuthor');
+
+    // nastavíme vrstvu dle požadovaného pořadí
+    let idx = 0;
+    if (pozadi) canvas.moveTo(pozadi, idx++);
+    if (shadowPozadi) canvas.moveTo(shadowPozadi, idx++);
+    osoby.forEach(osoba => canvas.moveTo(osoba, idx++));
+    if (shadowPredni) canvas.moveTo(shadowPredni, idx++);
+    if (spodniLista) canvas.moveTo(spodniLista, idx++);
+    if (lokaceZnak) canvas.moveTo(lokaceZnak, idx++);
+    if (hodinyZnak) canvas.moveTo(hodinyZnak, idx++);
+    if (textTime) canvas.moveTo(textTime, idx++);
+    if (textPlace) canvas.moveTo(textPlace, idx++);
+    if (textTitle) canvas.moveTo(textTitle, idx++);
+    if (textAuthor) canvas.moveTo(textAuthor, idx++);
   }
 
   document.getElementById('inputBackground').addEventListener('change', e => {
@@ -243,11 +231,12 @@
     reader.onload = function(event) {
       fabric.Image.fromURL(event.target.result, img => {
         if(userBackgroundImage) canvas.remove(userBackgroundImage);
-        img.set({left:0, top:0, selectable: false, evented: false});
+        img.set({left:0, top:0, selectable:false, evented:false, customType:'pozadi'});
         img.scaleToWidth(canvas.width);
         img.scaleToHeight(canvas.height);
         canvas.insertAt(img, 0);
         userBackgroundImage = img;
+        reorderLayers();
         canvas.renderAll();
       });
     };
@@ -272,22 +261,37 @@
             selectable: true,
             evented: true,
             hoverCursor: 'move',
+            customType:'osoba'
           });
           canvas.add(img);
           canvas.setActiveObject(img);
-          addShadowPredni();
+          reorderLayers();
+          canvas.renderAll();
         });
       };
       reader.readAsDataURL(file);
     });
   });
 
+  async function addShadowPredni() {
+    if(shadowFrontImage) {
+      canvas.remove(shadowFrontImage);
+      shadowFrontImage = null;
+    }
+    const img = await loadImage(assets.shadowPredni, {left:0, top:0, selectable:false, customType:'shadowPredni'});
+    shadowFrontImage = img;
+    canvas.add(img);
+    reorderLayers();
+    canvas.renderAll();
+  }
+
   document.addEventListener('keydown', e => {
-    if(e.key === "Delete" || e.key === "Backspace") {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
       const active = canvas.getActiveObject();
       if(active && active.selectable) {
         canvas.remove(active);
         canvas.discardActiveObject();
+        reorderLayers();
         canvas.renderAll();
       }
     }
@@ -306,6 +310,7 @@
     });
   });
 
+  // inicializace
   setupCanvas();
 </script>
 </body>
