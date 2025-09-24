@@ -151,8 +151,7 @@
     canvas.add(shadowPozadi);
     canvas.add(pozadi);
 
-    // Přidáme shadow přední ihned za pozadí a shadow pozadí
-    await addShadowPredni();
+    await addShadowPredni(); // přidáme shadow přední
 
     canvas.add(spodniLista);
     canvas.add(lokaceZnak);
@@ -232,7 +231,7 @@
     let idx = 0;
     if (pozadi) canvas.moveTo(pozadi, idx++);
     if (shadowPozadi) canvas.moveTo(shadowPozadi, idx++);
-    if (shadowPredni) canvas.moveTo(shadowPredni, idx++); // přesně před osobami
+    if (shadowPredni) canvas.moveTo(shadowPredni, idx++); // těsně před osoby
     osoby.forEach(osoba => canvas.moveTo(osoba, idx++));
     if (spodniLista) canvas.moveTo(spodniLista, idx++);
     if (lokaceZnak) canvas.moveTo(lokaceZnak, idx++);
@@ -247,10 +246,16 @@
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = function (event) {
       fabric.Image.fromURL(event.target.result, img => {
-        if(userBackgroundImage) canvas.remove(userBackgroundImage);
-        img.set({left: 0, top: 0, selectable: false, evented: false, customType: 'pozadi'});
+        if (userBackgroundImage) canvas.remove(userBackgroundImage);
+        img.set({
+          left: 0,
+          top: 0,
+          selectable: false,
+          evented: false,
+          customType: 'pozadi'
+        });
         img.scaleToWidth(canvas.width);
         img.scaleToHeight(canvas.height);
         canvas.insertAt(img, 0);
@@ -268,7 +273,7 @@
 
     Array.from(files).forEach(file => {
       const reader = new FileReader();
-      reader.onload = function(event) {
+      reader.onload = function (event) {
         fabric.Image.fromURL(event.target.result, img => {
           img.set({
             left: 300,
@@ -302,7 +307,7 @@
       top: 0,
       selectable: false,
       customType: 'shadowPredni',
-      opacity: 0.6
+      opacity: 0.6,
     });
     shadowFrontImage = img;
     canvas.add(img);
@@ -311,7 +316,7 @@
   }
 
   document.getElementById('downloadBtn').addEventListener('click', () => {
-    const dataURL = canvas.toDataURL({format: 'png', multiplier: 1});
+    const dataURL = canvas.toDataURL({ format: 'png', multiplier: 1 });
     const a = document.createElement('a');
     a.href = dataURL;
     a.download = 'voluntia-event.png';
@@ -321,7 +326,7 @@
   });
 
   document.addEventListener('keydown', e => {
-    if (e.key === "Delete" || e.key === "Backspace") {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
       const active = canvas.getActiveObject();
       if (active && active.selectable) {
         canvas.remove(active);
