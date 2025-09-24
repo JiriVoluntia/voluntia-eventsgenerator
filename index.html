@@ -80,16 +80,16 @@
 
 <div id="controls">
   <label for="inputTitle">Název akce</label>
-  <input type="text" id="inputTitle" placeholder="Název akce" value="Voluntia setkání v Liberci" />
+  <input type="text" id="inputTitle" value="Voluntia setkání v Liberci" />
 
   <label for="inputPlace">Místo</label>
-  <input type="text" id="inputPlace" placeholder="Místo" value="Pivovarský dvůr, Papírové náměstí" />
+  <input type="text" id="inputPlace" value="Pivovarský dvůr, Papírové náměstí" />
 
   <label for="inputTime">Čas</label>
-  <input type="text" id="inputTime" placeholder="Čas" value="25. září v 18:00" />
+  <input type="text" id="inputTime" value="25. září v 18:00" />
 
   <label for="inputAuthor">Zpracovatel</label>
-  <input type="text" id="inputAuthor" placeholder="Zpracovatel" value="zadavatel/zpracovatel: Voluntia" />
+  <input type="text" id="inputAuthor" value="zadavatel/zpracovatel: Voluntia" />
 
   <label for="inputBackground">Nahrát vlastní pozadí</label>
   <input type="file" id="inputBackground" accept="image/*" />
@@ -132,7 +132,7 @@
         if (options.height !== undefined) img.height = options.height;
         if (options.hasControls !== undefined) img.hasControls = options.hasControls;
         if (options.selectable !== undefined) img.selectable = options.selectable;
-        if (options.customType) img.customType = options.customType; // pro vrstvu
+        if (options.customType) img.customType = options.customType;
         img.set({...options});
         resolve(img);
       }, {crossOrigin: 'anonymous'});
@@ -151,7 +151,8 @@
     canvas.add(shadowPozadi);
     canvas.add(pozadi);
 
-    // osoby a shadow přední se přidávají později
+    // Přidáme shadow přední ihned za pozadí a shadow pozadí
+    await addShadowPredni();
 
     canvas.add(spodniLista);
     canvas.add(lokaceZnak);
@@ -164,11 +165,9 @@
     canvas.renderAll();
   }
 
-
   let texts = {};
 
   function addTextObjects() {
-
     const fontFamily = 'Inter, sans-serif';
 
     texts.title = new fabric.Textbox(document.getElementById('inputTitle').value, {
@@ -220,8 +219,8 @@
 
     const pozadi = objs.find(o => o.customType === 'pozadi');
     const shadowPozadi = objs.find(o => o.customType === 'shadowPozadi');
-    const osoby = objs.filter(o => o.customType === 'osoba');
     const shadowPredni = objs.find(o => o.customType === 'shadowPredni');
+    const osoby = objs.filter(o => o.customType === 'osoba');
     const spodniLista = objs.find(o => o.customType === 'spodniLista');
     const lokaceZnak = objs.find(o => o.customType === 'lokaceZnak');
     const hodinyZnak = objs.find(o => o.customType === 'hodinyZnak');
@@ -233,8 +232,7 @@
     let idx = 0;
     if (pozadi) canvas.moveTo(pozadi, idx++);
     if (shadowPozadi) canvas.moveTo(shadowPozadi, idx++);
-    // shadow přední musí být před pozadím, shadow pozadím a osobami, takže přesuneme ji zde pod osoby
-    if (shadowPredni) canvas.moveTo(shadowPredni, idx++);
+    if (shadowPredni) canvas.moveTo(shadowPredni, idx++); // přesně před osobami
     osoby.forEach(osoba => canvas.moveTo(osoba, idx++));
     if (spodniLista) canvas.moveTo(spodniLista, idx++);
     if (lokaceZnak) canvas.moveTo(lokaceZnak, idx++);
@@ -249,16 +247,10 @@
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function (event) {
+    reader.onload = function(event) {
       fabric.Image.fromURL(event.target.result, img => {
-        if (userBackgroundImage) canvas.remove(userBackgroundImage);
-        img.set({
-          left: 0,
-          top: 0,
-          selectable: false,
-          evented: false,
-          customType: 'pozadi'
-        });
+        if(userBackgroundImage) canvas.remove(userBackgroundImage);
+        img.set({left: 0, top: 0, selectable: false, evented: false, customType: 'pozadi'});
         img.scaleToWidth(canvas.width);
         img.scaleToHeight(canvas.height);
         canvas.insertAt(img, 0);
@@ -276,7 +268,7 @@
 
     Array.from(files).forEach(file => {
       const reader = new FileReader();
-      reader.onload = function (event) {
+      reader.onload = function(event) {
         fabric.Image.fromURL(event.target.result, img => {
           img.set({
             left: 300,
@@ -318,8 +310,18 @@
     canvas.renderAll();
   }
 
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const dataURL = canvas.toDataURL({format: 'png', multiplier: 1});
+    const a = document.createElement('a');
+    a.href = dataURL;
+    a.download = 'voluntia-event.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
   document.addEventListener('keydown', e => {
-    if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (e.key === "Delete" || e.key === "Backspace") {
       const active = canvas.getActiveObject();
       if (active && active.selectable) {
         canvas.remove(active);
@@ -334,18 +336,10 @@
     document.getElementById(id).addEventListener('input', e => {
       const val = e.target.value;
       switch (e.target.id) {
-        case 'inputTitle':
-          if (texts.title) texts.title.text = val;
-          break;
-        case 'inputPlace':
-          if (texts.place) texts.place.text = val;
-          break;
-        case 'inputTime':
-          if (texts.time) texts.time.text = val;
-          break;
-        case 'inputAuthor':
-          if (texts.author) texts.author.text = val || 'zadavatel/zpracovatel: Voluntia';
-          break;
+        case 'inputTitle': if (texts.title) texts.title.text = val; break;
+        case 'inputPlace': if (texts.place) texts.place.text = val; break;
+        case 'inputTime': if (texts.time) texts.time.text = val; break;
+        case 'inputAuthor': if (texts.author) texts.author.text = val || 'zadavatel/zpracovatel: Voluntia'; break;
       }
       canvas.renderAll();
     });
