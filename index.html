@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080" />
+    <title>Voluntia Event Generator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 1080px;
+            height: 1080px;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            background: url('assets/Shadow-pozadi.jpg'), #fff;
+            background-size: cover;
+            background-position: center;
+        }
+        .shadow-front {
+            position: absolute;
+            top: 0; left: 0;
+            width: 1080px; height: 1080px;
+            pointer-events: none;
+        }
+        .bottom-bar {
+            position: absolute;
+            left: 0; bottom: 0;
+            width: 1080px;
+            height: 108px;
+        }
+        .event-title {
+            position: absolute;
+            left: 40px; top: 586px;
+            font-size: 90px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 3px 3px rgba(0,0,0,0.25);
+        }
+        .event-place {
+            position: absolute;
+            left: 93px; top: 811px;
+            font-size: 50px;
+            font-weight: 700;
+            color: #FED801;
+            text-shadow: 0 2px 2px rgba(0,0,0,0.25);
+        }
+        .event-time {
+            position: absolute;
+            left: 93px; top: 874px;
+            font-size: 50px;
+            font-weight: 700;
+            color: #FED801;
+            text-shadow: 0 2px 2px rgba(0,0,0,0.25);
+        }
+        .author {
+            position: absolute;
+            right: 40px; bottom: 38px;
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.7);
+            text-align: right;
+        }
+        .icon {
+            position: absolute;
+            width: 37px; height: 37px;
+        }
+        .icon-location {
+            left: 40px; top: 824px;
+        }
+        .icon-clock {
+            left: 40px; top: 884px;
+        }
+        .user-image {
+            position: absolute;
+            left: 200px; top: 200px;
+            width: 400px; height: 400px;
+            object-fit: contain;
+            z-index: 1;
+        }
+        #controls {
+            position: absolute;
+            left: 40px;
+            top: 40px;
+            background: #fff9;
+            padding: 8px 12px;
+            border-radius: 8px;
+            z-index: 10;
+        }
+      </style>
+</head>
+<body>
+    <div id="controls">
+      <input type="text" id="inputTitle" placeholder="Název akce"><br>
+      <input type="text" id="inputPlace" placeholder="Místo"><br>
+      <input type="text" id="inputTime" placeholder="Čas"><br>
+      <input type="text" id="inputAuthor" placeholder="Zpracovatel"><br>
+      <input type="file" id="inputPerson" accept="image/*" multiple><br>
+      <button onclick="setEventParams()">Aktualizovat</button>
+    </div>
+    <img src="assets/Shadow-predni.jpg" class="shadow-front" />
+    <div id="user-images"></div>
+    <img src="assets/Lokace-znak.jpg" class="icon icon-location" />
+    <img src="assets/Hodiny-znak.jpg" class="icon icon-clock" />
+    <div class="event-title" id="eventTitle">Voluntia setkání v Liberci</div>
+    <div class="event-place" id="eventPlace">Pivovarský dvůr, Papírové náměstí</div>
+    <div class="event-time" id="eventTime">25. září v 18:00</div>
+    <div class="author" id="eventAuthor">zadavatel/zpracovatel: Voluntia</div>
+    <img src="assets/Spodni-lista.jpg" class="bottom-bar" />
+    <script>
+      function setEventParams() {
+        document.getElementById('eventTitle').textContent = document.getElementById('inputTitle').value;
+        document.getElementById('eventPlace').textContent = document.getElementById('inputPlace').value;
+        document.getElementById('eventTime').textContent = document.getElementById('inputTime').value;
+        document.getElementById('eventAuthor').textContent = document.getElementById('inputAuthor').value || 'zadavatel/zpracovatel: Voluntia';
+
+        // Kontrola a vložení obrázků osob
+        const input = document.getElementById('inputPerson');
+        const container = document.getElementById('user-images');
+        container.innerHTML = '';
+        if (input.files) {
+          Array.from(input.files).forEach((file, i) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const img = document.createElement('img');
+              img.src = e.target.result;
+              img.className = 'user-image';
+              img.style.left = (200+100*i) + 'px';
+              img.style.top = '200px';
+              img.style.width = '400px';
+              img.style.height = '400px';
+              container.appendChild(img);
+            }
+            reader.readAsDataURL(file);
+          });
+        }
+      }
+    </script>
+</body>
+</html>
