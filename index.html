@@ -1,139 +1,260 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=1080" />
-    <title>Voluntia Event Generator</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            width: 1080px;
-            height: 1080px;
-            font-family: 'Inter', sans-serif;
-            position: relative;
-            background: url('assets/Shadow-pozadi.jpg'), #fff;
-            background-size: cover;
-            background-position: center;
-        }
-        .shadow-front {
-            position: absolute;
-            top: 0; left: 0;
-            width: 1080px; height: 1080px;
-            pointer-events: none;
-        }
-        .bottom-bar {
-            position: absolute;
-            left: 0; bottom: 0;
-            width: 1080px;
-            height: 108px;
-        }
-        .event-title {
-            position: absolute;
-            left: 40px; top: 586px;
-            font-size: 90px;
-            font-weight: 900;
-            color: #fff;
-            text-shadow: 0 3px 3px rgba(0,0,0,0.25);
-        }
-        .event-place {
-            position: absolute;
-            left: 93px; top: 811px;
-            font-size: 50px;
-            font-weight: 700;
-            color: #FED801;
-            text-shadow: 0 2px 2px rgba(0,0,0,0.25);
-        }
-        .event-time {
-            position: absolute;
-            left: 93px; top: 874px;
-            font-size: 50px;
-            font-weight: 700;
-            color: #FED801;
-            text-shadow: 0 2px 2px rgba(0,0,0,0.25);
-        }
-        .author {
-            position: absolute;
-            right: 40px; bottom: 38px;
-            font-size: 14px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.7);
-            text-align: right;
-        }
-        .icon {
-            position: absolute;
-            width: 37px; height: 37px;
-        }
-        .icon-location {
-            left: 40px; top: 824px;
-        }
-        .icon-clock {
-            left: 40px; top: 884px;
-        }
-        .user-image {
-            position: absolute;
-            left: 200px; top: 200px;
-            width: 400px; height: 400px;
-            object-fit: contain;
-            z-index: 1;
-        }
-        #controls {
-            position: absolute;
-            left: 40px;
-            top: 40px;
-            background: #fff9;
-            padding: 8px 12px;
-            border-radius: 8px;
-            z-index: 10;
-        }
-      </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1080" />
+<title>Voluntia Event Generator</title>
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    background: #f0f0f0;
+    padding: 20px;
+    gap: 40px;
+  }
+  #canvas-container {
+    position: relative;
+    width: 1080px; height: 1080px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    background: #fff;
+  }
+  canvas {
+    border: 1px solid #ccc;
+  }
+  #controls {
+    max-width: 300px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  #controls label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    margin-top: 12px;
+  }
+  #controls input[type=text], #controls input[type=file] {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  #controls button {
+    margin-top: 20px;
+    padding: 10px;
+    width: 100%;
+    font-weight: 700;
+    background: #FED801;
+    border: none;
+    border-radius: 4px;
+    color: #000;
+    cursor: pointer;
+  }
+  #controls button:hover {
+    background: #e1c500;
+  }
+</style>
 </head>
 <body>
-    <div id="controls">
-      <input type="text" id="inputTitle" placeholder="Název akce"><br>
-      <input type="text" id="inputPlace" placeholder="Místo"><br>
-      <input type="text" id="inputTime" placeholder="Čas"><br>
-      <input type="text" id="inputAuthor" placeholder="Zpracovatel"><br>
-      <input type="file" id="inputPerson" accept="image/*" multiple><br>
-      <button onclick="setEventParams()">Aktualizovat</button>
-    </div>
-    <img src="assets/Shadow-predni.jpg" class="shadow-front" />
-    <div id="user-images"></div>
-    <img src="assets/Lokace-znak.jpg" class="icon icon-location" />
-    <img src="assets/Hodiny-znak.jpg" class="icon icon-clock" />
-    <div class="event-title" id="eventTitle">Voluntia setkání v Liberci</div>
-    <div class="event-place" id="eventPlace">Pivovarský dvůr, Papírové náměstí</div>
-    <div class="event-time" id="eventTime">25. září v 18:00</div>
-    <div class="author" id="eventAuthor">zadavatel/zpracovatel: Voluntia</div>
-    <img src="assets/Spodni-lista.jpg" class="bottom-bar" />
-    <script>
-      function setEventParams() {
-        document.getElementById('eventTitle').textContent = document.getElementById('inputTitle').value;
-        document.getElementById('eventPlace').textContent = document.getElementById('inputPlace').value;
-        document.getElementById('eventTime').textContent = document.getElementById('inputTime').value;
-        document.getElementById('eventAuthor').textContent = document.getElementById('inputAuthor').value || 'zadavatel/zpracovatel: Voluntia';
 
-        // Kontrola a vložení obrázků osob
-        const input = document.getElementById('inputPerson');
-        const container = document.getElementById('user-images');
-        container.innerHTML = '';
-        if (input.files) {
-          Array.from(input.files).forEach((file, i) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-              const img = document.createElement('img');
-              img.src = e.target.result;
-              img.className = 'user-image';
-              img.style.left = (200+100*i) + 'px';
-              img.style.top = '200px';
-              img.style.width = '400px';
-              img.style.height = '400px';
-              container.appendChild(img);
-            }
-            reader.readAsDataURL(file);
-          });
-        }
+<div id="controls">
+  <label for="inputTitle">Název akce</label>
+  <input type="text" id="inputTitle" value="Voluntia setkání v Liberci" placeholder="Název akce" />
+  
+  <label for="inputPlace">Místo</label>
+  <input type="text" id="inputPlace" value="Pivovarský dvůr, Papírové náměstí" placeholder="Místo" />
+  
+  <label for="inputTime">Čas</label>
+  <input type="text" id="inputTime" value="25. září v 18:00" placeholder="Čas" />
+  
+  <label for="inputAuthor">Zpracovatel</label>
+  <input type="text" id="inputAuthor" placeholder="Zpracovatel" value="zadavatel/zpracovatel: Voluntia" />
+  
+  <label for="inputPersons">Nahrát fotky osob</label>
+  <input type="file" id="inputPersons" multiple accept="image/*" />
+  
+  <button id="downloadBtn">Stáhnout obrázek</button>
+</div>
+
+<div id="canvas-container">
+  <canvas id="eventCanvas" width="1080" height="1080"></canvas>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
+<script>
+  const canvas = new fabric.Canvas('eventCanvas', {preserveObjectStacking: true});
+
+  // Load background images (shadow background, base background, shadow front, bottom bar and icons)
+  const assets = {
+    shadowPozadi: 'assets/Shadow-pozadi.jpg',
+    pozadi: 'assets/Celkovy-obrazek.jpg',
+    shadowPredni: 'assets/Shadow-predni.jpg',
+    spodniLista: 'assets/Spodni-lista.jpg',
+    lokaceZnak: 'assets/Lokace-znak.jpg',
+    hodinyZnak: 'assets/Hodiny-znak.jpg'
+  };
+
+  async function loadImage(url, options = {}) {
+    return new Promise((resolve, reject) => {
+      fabric.Image.fromURL(url, img => {
+        if (options.scale) img.scale(options.scale);
+        if (options.left !== undefined) img.left = options.left;
+        if (options.top !== undefined) img.top = options.top;
+        if (options.width !== undefined) img.width = options.width;
+        if (options.height !== undefined) img.height = options.height;
+        if (options.hasControls !== undefined) img.hasControls = options.hasControls;
+        if (options.selectable !== undefined) img.selectable = options.selectable;
+        img.set({...options});
+        resolve(img);
+      }, {crossOrigin: 'anonymous'});
+    });
+  }
+
+  async function setupCanvas() {
+    canvas.clear();
+
+    // Load layered backgrounds
+    const shadowPozadi = await loadImage(assets.shadowPozadi, {left:0, top:0, selectable: false});
+    const pozadi = await loadImage(assets.pozadi, {left:0, top:0, selectable: false});
+    const shadowPredni = await loadImage(assets.shadowPredni, {left:0, top:0, selectable: false});
+    const spodniLista = await loadImage(assets.spodniLista, {left:0, top:972, selectable: false});
+    const lokaceZnak = await loadImage(assets.lokaceZnak, {left:40, top:824, selectable: false, width:37, height:37});
+    const hodinyZnak = await loadImage(assets.hodinyZnak, {left:40, top:884, selectable: false, width:37, height:37});
+
+    canvas.add(shadowPozadi);
+    canvas.add(pozadi);
+    canvas.add(shadowPredni);
+    canvas.add(spodniLista);
+    canvas.add(lokaceZnak);
+    canvas.add(hodinyZnak);
+
+    addTextObjects();
+  }
+
+  let texts = {};
+  function addTextObjects() {
+    let fontFamily = 'Inter, sans-serif';
+
+    // Název
+    texts.title = new fabric.Textbox(document.getElementById('inputTitle').value, {
+      left: 40, top: 586,
+      fontFamily,
+      fontWeight: '900',
+      fontSize: 90,
+      fill: '#ffffff',
+      shadow: new fabric.Shadow({
+        color: 'rgba(0,0,0,0.25)',
+        blur: 3,
+        offsetX: 0,
+        offsetY: 3
+      }),
+      selectable: false,
+      width: 1000
+    });
+
+    // Místo
+    texts.place = new fabric.Textbox(document.getElementById('inputPlace').value, {
+      left: 93, top: 811,
+      fontFamily,
+      fontWeight: '700',
+      fontSize: 50,
+      fill: '#FED801',
+      shadow: new fabric.Shadow({
+        color: 'rgba(0,0,0,0.25)',
+        blur: 2,
+        offsetX: 0,
+        offsetY: 2
+      }),
+      selectable: false,
+      width: 950
+    });
+
+    // Čas
+    texts.time = new fabric.Textbox(document.getElementById('inputTime').value, {
+      left: 93, top: 874,
+      fontFamily,
+      fontWeight: '700',
+      fontSize: 50,
+      fill: '#FED801',
+      shadow: new fabric.Shadow({
+        color: 'rgba(0,0,0,0.25)',
+        blur: 2,
+        offsetX: 0,
+        offsetY: 2
+      }),
+      selectable: false,
+      width: 950
+    });
+
+    // Zpracovatel (vpravo dole)
+    texts.author = new fabric.Textbox(document.getElementById('inputAuthor').value || 'zadavatel/zpracovatel: Voluntia', {
+      left: 815, top: 930,
+      fontFamily,
+      fontWeight: '600',
+      fontSize: 14,
+      fill: 'rgba(255,255,255,0.7)',
+      textAlign: 'right',
+      selectable: false,
+      width: 250
+    });
+
+    canvas.add(texts.title, texts.place, texts.time, texts.author);
+  }
+
+  // Aktualizace textů při změně inputů
+  ['inputTitle', 'inputPlace', 'inputTime', 'inputAuthor'].forEach(id => {
+    document.getElementById(id).addEventListener('input', e => {
+      const val = e.target.value;
+      switch(e.target.id) {
+        case 'inputTitle': texts.title && (texts.title.text = val); break;
+        case 'inputPlace': texts.place && (texts.place.text = val); break;
+        case 'inputTime': texts.time && (texts.time.text = val); break;
+        case 'inputAuthor': texts.author && (texts.author.text = val || 'zadavatel/zpracovatel: Voluntia'); break;
       }
-    </script>
+      canvas.renderAll();
+    });
+  });
+
+  // Upload a přidání fotek osob jako draggable objekty
+  document.getElementById('inputPersons').addEventListener('change', e => {
+    const files = e.target.files;
+    if (!files.length) return;
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        fabric.Image.fromURL(event.target.result, img => {
+          img.set({
+            left: 300,
+            top: 200,
+            scaleX: 0.5,
+            scaleY: 0.5,
+            hasBorders: true,
+            hasControls: true
+          });
+          canvas.add(img);
+          canvas.setActiveObject(img);
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // Stáhnout jako PNG
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const dataURL = canvas.toDataURL({format: 'png', multiplier: 1});
+    const a = document.createElement('a');
+    a.href = dataURL;
+    a.download = 'voluntia-event.png';
+    a.click();
+  });
+
+  // Inicializace
+  setupCanvas();
+</script>
+
 </body>
 </html>
