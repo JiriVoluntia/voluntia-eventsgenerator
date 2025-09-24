@@ -3,15 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Voluntia Event Generator - Fixed Shadow</title>
+<title>Voluntia Event Generator - Oprava Shadow Předního</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;900&display=swap" rel="stylesheet" />
 
 <style>
   body {
     font-family: 'Inter', sans-serif;
-    margin: 0; padding: 20px;
-    display: flex; flex-wrap: wrap;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     background: #f0f0f0;
     gap: 20px;
@@ -48,7 +50,8 @@
     margin-top: 14px;
     font-size: 14px;
   }
-  #controls input[type=text], #controls input[type=file] {
+  #controls input[type=text],
+  #controls input[type=file] {
     width: 100%;
     padding: 10px;
     font-size: 16px;
@@ -123,16 +126,8 @@
   let shadowFrontImage = null;
 
   async function loadImage(url, options = {}) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       fabric.Image.fromURL(url, img => {
-        if (options.scale) img.scale(options.scale);
-        if (options.left !== undefined) img.left = options.left;
-        if (options.top !== undefined) img.top = options.top;
-        if (options.width !== undefined) img.width = options.width;
-        if (options.height !== undefined) img.height = options.height;
-        if (options.hasControls !== undefined) img.hasControls = options.hasControls;
-        if (options.selectable !== undefined) img.selectable = options.selectable;
-        if (options.customType) img.customType = options.customType;
         img.set({...options});
         resolve(img);
       }, {crossOrigin: 'anonymous'});
@@ -148,19 +143,14 @@
     const lokaceZnak = await loadImage(assets.lokaceZnak, {left: 40, top: 824, selectable: false, width: 37, height: 37, customType: 'lokaceZnak'});
     const hodinyZnak = await loadImage(assets.hodinyZnak, {left: 40, top: 884, selectable: false, width: 37, height: 37, customType: 'hodinyZnak'});
 
-    // Přidáme základní vrstvy
     canvas.add(shadowPozadi);
     canvas.add(pozadi);
 
-    // Přidáme shadow přední Vždy ZDE mezi pozadím a osobami
+    // Přidáme shadow přední s vyšším indexem než osoby přidáme později
     if(shadowFrontImage) canvas.remove(shadowFrontImage);
     shadowFrontImage = await loadImage(assets.shadowPredni, {left:0, top:0, selectable:false, opacity:0.6, customType:'shadowPredni'});
     canvas.add(shadowFrontImage);
 
-    // Poté osoby až nad shadow přední
-    // osoby se budou přidávat později z inputPersons
-
-    // Přidání spodní lišty a ikon
     canvas.add(spodniLista);
     canvas.add(lokaceZnak);
     canvas.add(hodinyZnak);
@@ -168,7 +158,6 @@
     addTextObjects();
 
     reorderLayers();
-
     canvas.renderAll();
   }
 
@@ -179,33 +168,44 @@
 
     texts.title = new fabric.Textbox(document.getElementById('inputTitle').value, {
       left: 40, top: 586, fontFamily, fontWeight: '900', fontSize: 90,
-      fill: '#fff',
-      shadow: new fabric.Shadow({color:'rgba(0,0,0,0.25)', blur:3, offsetX:0, offsetY:3}),
-      selectable: false, evented: false,
-      width: 1000, customType: 'textTitle',
+      fill: '#ffffff',
+      shadow: new fabric.Shadow({
+        color: 'rgba(0,0,0,0.25)', blur: 3, offsetX: 0, offsetY: 3
+      }),
+      selectable: false,
+      width: 1000,
+      customType: 'textTitle'
     });
 
     texts.place = new fabric.Textbox(document.getElementById('inputPlace').value, {
       left: 93, top: 811, fontFamily, fontWeight: '700', fontSize: 50,
       fill: '#FED801',
-      shadow: new fabric.Shadow({color:'rgba(0,0,0,0.25)', blur:2, offsetX:0, offsetY:2}),
-      selectable: false, evented: false,
-      width: 950, customType: 'textPlace'
+      shadow: new fabric.Shadow({
+        color: 'rgba(0,0,0,0.25)', blur: 2, offsetX: 0, offsetY: 2
+      }),
+      selectable: false,
+      width: 950,
+      customType: 'textPlace'
     });
 
     texts.time = new fabric.Textbox(document.getElementById('inputTime').value, {
       left: 93, top: 874, fontFamily, fontWeight: '700', fontSize: 50,
       fill: '#FED801',
-      shadow: new fabric.Shadow({color:'rgba(0,0,0,0.25)', blur:2, offsetX:0, offsetY:2}),
-      selectable: false, evented: false,
-      width: 950, customType: 'textTime'
+      shadow: new fabric.Shadow({
+        color: 'rgba(0,0,0,0.25)', blur: 2, offsetX: 0, offsetY: 2
+      }),
+      selectable: false,
+      width: 950,
+      customType: 'textTime'
     });
 
     texts.author = new fabric.Textbox(document.getElementById('inputAuthor').value || 'zadavatel/zpracovatel: Voluntia', {
       left: 815, top: 930, fontFamily, fontWeight: '600', fontSize: 14,
       fill: 'rgba(255,255,255,0.7)',
-      textAlign: 'right', selectable: false, evented: false,
-      width: 250, customType: 'textAuthor'
+      textAlign: 'right',
+      selectable: false,
+      width: 250,
+      customType: 'textAuthor'
     });
 
     canvas.add(texts.title, texts.place, texts.time, texts.author);
@@ -229,8 +229,11 @@
     let idx = 0;
     if (pozadi) canvas.moveTo(pozadi, idx++);
     if (shadowPozadi) canvas.moveTo(shadowPozadi, idx++);
-    if (shadowPredni) canvas.moveTo(shadowPredni, idx++); // těsně za shadow pozadí
-    osoby.forEach(osoba => canvas.moveTo(osoba, idx++));
+
+    osoby.forEach(o => canvas.moveTo(o, idx++));
+
+    if (shadowPredni) canvas.moveTo(shadowPredni, idx++);
+
     if (spodniLista) canvas.moveTo(spodniLista, idx++);
     if (lokaceZnak) canvas.moveTo(lokaceZnak, idx++);
     if (hodinyZnak) canvas.moveTo(hodinyZnak, idx++);
@@ -244,9 +247,9 @@
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function (event) {
+    reader.onload = function(event) {
       fabric.Image.fromURL(event.target.result, img => {
-        if (userBackgroundImage) canvas.remove(userBackgroundImage);
+        if(userBackgroundImage) canvas.remove(userBackgroundImage);
         img.set({
           left: 0,
           top: 0,
@@ -271,7 +274,7 @@
 
     Array.from(files).forEach(file => {
       const reader = new FileReader();
-      reader.onload = function (event) {
+      reader.onload = function(event) {
         fabric.Image.fromURL(event.target.result, img => {
           img.set({
             left: 300,
@@ -295,8 +298,8 @@
     });
   });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Delete' || e.key === 'Backspace') {
+  document.addEventListener('keydown', e => {
+    if (e.key === "Delete" || e.key === "Backspace") {
       const active = canvas.getActiveObject();
       if (active && active.selectable) {
         canvas.remove(active);
