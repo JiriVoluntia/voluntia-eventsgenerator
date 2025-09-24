@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=1080" />
 <title>Voluntia Event Generator</title>
 
-<!-- Google Fonts Inter s požadovanými řezmi -->
+<!-- Načtení fontu Inter s potřebnými řezy -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;900&display=swap" rel="stylesheet" />
 
 <style>
@@ -95,7 +95,14 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
 <script>
-  const canvas = new fabric.Canvas('eventCanvas', {preserveObjectStacking: true});
+  const canvas = new fabric.Canvas('eventCanvas', {
+    preserveObjectStacking: true,
+    selection: true,
+    perPixelTargetFind: true,
+    targetFindTolerance: 4,
+    stopContextMenu: true
+  });
+
   let userBackgroundImage = null;
 
   const assets = {
@@ -108,7 +115,7 @@
   };
 
   async function loadImage(url, options = {}) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       fabric.Image.fromURL(url, img => {
         if (options.scale) img.scale(options.scale);
         if (options.left !== undefined) img.left = options.left;
@@ -192,7 +199,7 @@
     canvas.add(texts.title, texts.place, texts.time, texts.author);
   }
 
-  // Load uživatelského pozadí
+  // Nahrání uživatelského pozadí
   document.getElementById('inputBackground').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -211,7 +218,7 @@
     reader.readAsDataURL(file);
   });
 
-  // Nahrávání fotek osob a jejich drag/resize umožnění
+  // Nahrávání fotek osob
   document.getElementById('inputPersons').addEventListener('change', e => {
     const files = e.target.files;
     if (!files.length) return;
@@ -227,7 +234,9 @@
             scaleY: 0.5,
             hasBorders: true,
             hasControls: true,
-            selectable: true
+            selectable: true,
+            evented: true,
+            hoverCursor: 'move'
           });
           canvas.add(img);
           canvas.setActiveObject(img);
@@ -238,9 +247,8 @@
     });
   });
 
-  // Přidání shadow předního nad osoby
+  // Přidání shadow předního nad osobami
   function addShadowPredni() {
-    // Odstraníme starý shadow predni
     canvas.getObjects().forEach(obj => {
       if(obj.shadowFront) canvas.remove(obj);
     });
@@ -248,7 +256,6 @@
       img.set({left:0, top:0, selectable: false, shadowFront:true});
       canvas.add(img);
       canvas.bringToFront(img);
-      // Texty musí být nad shadow
       Object.values(texts).forEach(t => canvas.bringToFront(t));
       canvas.renderAll();
     });
@@ -256,7 +263,7 @@
 
   // Mazání vybrané fotky klávesou Delete/Backspace
   document.addEventListener('keydown', e => {
-    if((e.key === "Delete" || e.key === "Backspace")) {
+    if(e.key === "Delete" || e.key === "Backspace") {
       const active = canvas.getActiveObject();
       if(active && active.selectable) {
         canvas.remove(active);
@@ -266,27 +273,18 @@
     }
   });
 
-  // Aktualizace textů při změně políček formuláře
+  // Aktualizace textů při změně vstupních polí
   ['inputTitle', 'inputPlace', 'inputTime', 'inputAuthor'].forEach(id => {
     document.getElementById(id).addEventListener('input', e => {
       const val = e.target.value;
       switch(e.target.id) {
-        case 'inputTitle': texts.title && (texts.title.text = val); break;
-        case 'inputPlace': texts.place && (texts.place.text = val); break;
-        case 'inputTime': texts.time && (texts.time.text = val); break;
-        case 'inputAuthor': texts.author && (texts.author.text = val || 'zadavatel/zpracovatel: Voluntia'); break;
+        case 'inputTitle': if(texts.title) texts.title.text = val; break;
+        case 'inputPlace': if(texts.place) texts.place.text = val; break;
+        case 'inputTime': if(texts.time) texts.time.text = val; break;
+        case 'inputAuthor': if(texts.author) texts.author.text = val || 'zadavatel/zpracovatel: Voluntia'; break;
       }
       canvas.renderAll();
     });
-  });
-
-  // Stáhnout jako PNG obrázek
-  document.getElementById('downloadBtn').addEventListener('click', () => {
-    const dataURL = canvas.toDataURL({format:'png', multiplier:1});
-    const a = document.createElement('a');
-    a.href = dataURL;
-    a.download = 'voluntia-event.png';
-    a.click();
   });
 
   setupCanvas();
